@@ -1,0 +1,51 @@
+
+
+services:
+  node1:
+    build: .
+    container_name: node1
+    command: ["-id=node1", "-port=9001", "-peers=node2:9002,node3:9003"]
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./data/node1:/app/data
+    networks:
+      - kvs-network
+
+  node2:
+    build: .
+    container_name: node2
+    command: ["-id=node2", "-port=9002", "-peers=node1:9001,node3:9003"]
+    ports:
+      - "9002:9002"
+    volumes:
+      - ./data/node2:/app/data
+    networks:
+      - kvs-network
+
+  node3:
+    build: .
+    container_name: node3
+    command: ["-id=node3", "-port=9003", "-peers=node1:9001,node2:9002"]
+    ports:
+      - "9003:9003"
+    volumes:
+      - ./data/node3:/app/data
+    networks:
+      - kvs-network
+
+  tester:
+    build: .
+    container_name: benchmark-client
+    # This runs the benchmark script instead of the server
+    entrypoint: ["go", "run", "cmd/benchmark/main.go"]
+    depends_on:
+      - node1
+      - node2
+      - node3
+    networks:
+      - kvs-network
+
+networks:
+  kvs-network:
+    driver: bridge
